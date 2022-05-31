@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="x-ua-compatible" content="ie=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>nevershortbtc - Installing Bitcoin Core on Linux</title>
+        <link rel="stylesheet" href="../css/default.css" />
+    </head>
+    <body>
+        <header>
+            <div class="logo">
+                <a href="../">nevershortbtc</a>
+            </div>
+            <nav>
+                <a href="../">Home</a>
+                <!--
+                <a href="/about.html">About</a>
+                <a href="/contact.html">Contact</a>
+                <a href="/archive.html">Archive</a>
+                -->
+            </nav>
+        </header>
+
+        <main role="main">
+            <h1>Installing Bitcoin Core on Linux</h1>
+            <article>
+    <section>
+        <p>This article will guide you through installing Bitcoin Core on Linux. My preferred distribution is
+<a href="https://www.debian.org">Debian</a>, so examples will be for Debian, but Bitcoin Core can be run on
+other Linux distributions as well.</p>
+<h2 id="prerequisites">Prerequisites</h2>
+<p>You will need a Linux system, with enough storage to store the blockchain, currently around 450G.
+This system will need an internet connection.</p>
+<h2 id="install-dependencies">Install dependencies</h2>
+<div class="sourceCode" id="cb1"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> apt install wget tar</span></code></pre></div>
+<h2 id="create-bitcoin-user">Create bitcoin user</h2>
+<p>We’ll be creating a bitcoin user for Bitcoin core, to keep things secure and separate from the rest
+of the system.</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> adduser bitcoin</span></code></pre></div>
+<p>Provide a password for the new user when prompted. The other information can be completed or left
+empty, as you wish.</p>
+<h2 id="download-and-install-bitcoin-core">Download and install Bitcoin Core</h2>
+<p>Browse to https://bitcoin.org/en/download and copy the link for the Linux (tgz) file on the left of
+the download page. At the time of writing, this link is
+https://bitcoin.org/bin/bitcoin-core-22.0/bitcoin-22.0-x86_64-linux-gnu.tar.gz</p>
+<p>Next we’ll switch to the <em>bitcoin</em> user and download the file using <em>wget</em>. Provide the password
+when prompted, and substitute the URL for the one you copied from the download page.</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">su</span> <span class="at">-</span> bitcoin</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="fu">wget</span> https://bitcoin.org/bin/bitcoin-core-22.0/bitcoin-22.0-x86_64-linux-gnu.tar.gz</span></code></pre></div>
+<p>Next we’ll extract the tar archive.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">tar</span> xf bitcoin-22.0-x86_64-linux-gnu.tar.gz</span></code></pre></div>
+<p>Substitute the correct filename if you downloaded a newer version.
+This will create a directory which includes the version number, something like <em>bitcoin-22.0</em>.
+I like to create a symlink to this directory to make it easy to upgrade in future.</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ln</span> <span class="at">-s</span> bitcoin-22.0 bitcoin</span></code></pre></div>
+<p>We now have a <em>bitcoin/bin</em> directory with the Bitcoin core binaries, we’ll add this directory to our
+path for convenience.</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;PATH=</span><span class="va">$PATH</span><span class="st">:~/bitcoin/bin&quot;</span> <span class="op">&gt;&gt;</span> ~/.bashrc</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="bu">source</span> ~/.bashrc</span></code></pre></div>
+<p>The <em>.bashrc</em> file gets sourced when you log in, we’re manually sourcing it here so that we don’t have to log
+out and back in.</p>
+<p>Next we’re going to create a <em>systemd</em> startup script, so that we can control the bitcoin daemon with the <em>systemct</em> command,
+and have it start up automatically at bootup. We’ll have to switch to the <em>root</em> user to perform these steps.</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">su</span> <span class="at">-</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span> <span class="op">&lt;&lt;EOF</span> <span class="op">&gt;&gt;</span> /etc/systemd/system/bitcoind.service</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="st">[Unit]</span></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a><span class="st">Description=Manage bitcoind running as bitcoin user</span></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a><span class="st">After=network.target</span></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a><span class="st">[Service]</span></span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a><span class="st">Type=oneshot</span></span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a><span class="st">User=bitcoin</span></span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a><span class="st">ExecStart=/home/bitcoin/bitcoin/bin/bitcoind</span></span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a><span class="st">RemainAfterExit=yes</span></span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a><span class="st">ExecStop=/home/bitcoin/bitcoin/bin/bitcoin-cli stop</span></span>
+<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a><span class="st">[Install]</span></span>
+<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a><span class="st">WantedBy=multi-user.target</span></span>
+<span id="cb7-17"><a href="#cb7-17" aria-hidden="true" tabindex="-1"></a><span class="op">EOF</span></span>
+<span id="cb7-18"><a href="#cb7-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-19"><a href="#cb7-19" aria-hidden="true" tabindex="-1"></a><span class="ex">systemctl</span> enable bitcoind</span>
+<span id="cb7-20"><a href="#cb7-20" aria-hidden="true" tabindex="-1"></a><span class="ex">systemctl</span> start bitcoind <span class="kw">&amp;</span></span></code></pre></div>
+<p>That last command will take a while to run the first time bitcoind is started, which is why we’re running it in the background
+with <em>&amp;</em>.</p>
+<p>Give it a minute or two to start up, then you can use <em>bitcoin-cli</em> to check the progress of the blockchain download.</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="ex">bitcoin-cli</span> getblockchaininfo <span class="kw">|</span> <span class="fu">less</span></span></code></pre></div>
+<p>Among the many lines of output, you should see lines like these</p>
+<blockquote>
+<p>“verificationprogress”: 1.387586886309934e-09,
+“initialblockdownload”: true,</p>
+</blockquote>
+<p><em>verificationprogress</em> will approach one as your node catches up to the blockchain. And <em>initialblockdownload</em> will change to <em>false</em> when your node has caught up.</p>
+<h2 id="congratulations">Congratulations!</h2>
+<p>Your full node is now up and running, and busy downloading the blockchain. You can find more information on
+configuration of bitcoin core at https://bitcoin.org</p>
+    </section>
+</article>
+
+        </main>
+
+        <footer>
+            Site proudly generated by
+            <a href="http://jaspervdj.be/hakyll">Hakyll</a>
+        </footer>
+    </body>
+</html>
